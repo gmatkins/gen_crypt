@@ -12,26 +12,27 @@
 
 using namespace std;
 
-typedef unsigned char byte;
+typedef unsigned short int byte;
 typedef byte nibble;
 
-int hexToInt(char* hexVal);
+byte hexToByte(char* hexVal); //x
+byte charToByte(char charVal); //x
 
-void encipher(char* fileName, char* key);
-void decipher(char* fileName, char* key);
+void encipher(char plainText, byte key);
+void decipher(char cipherText, byte key);
 
-void sBox(byte& text, int key);
+void sBox(byte& text, int key); //x
 
-void spinLeft(byte& text, int key);
-void spinRight(byte& text, int key);
+void XORwithKey(nibble& in, nibble key); //x
 
-nibble getLeftNibble(byte in);
-nibble getRightNibble(byte in);
+void getNibblesFromByte(byte in, nibble& lNibble, nibble& rNibble); //x
 
-void shiftIntoKey(char* text);
+void shiftIntoKey(byte& key, byte plainText); //x
 
 
 int main(int argc, char** argv){
+    nibble rKeyNibble=0, lKeyNibble=0;
+    byte key;
     if (argc < 2){
        cerr << "No file specified." << endl;
        return 0;
@@ -45,17 +46,23 @@ int main(int argc, char** argv){
        return 0;
     }
     char * fileName = argv[1];
-    if (strcmp(fileName + strlen(fileName) - 4, ".gnc") == 0)
-       ;//gen_crypt produces a plain text file from the .gnc file
-    else
-        cout << hexToInt(argv[2]) << endl;
+    key = hexToByte(argv[2]);
+    getNibblesFromByte(key, lKeyNibble, rKeyNibble);
+    if (strcmp(fileName + strlen(fileName) - 4, ".gnc") == 0){
+       //gen_crypt produces a plain text file from the .gnc file
+       ;
+    }
+    else{
+        cout << key << endl;
+        cout << lKeyNibble << " " << rKeyNibble << endl;    
+    }
         //gen_crypt produces a .gnc file from the plain text
 	return 0;
 }
 
 //This funciton converts a two byte hexadecimale value into an
 //integer value. Assumes ASCII values.
-int hexToInt(char* hexVal){
+byte hexToByte(char* hexVal){
     if (strlen(hexVal) != 2){
        cerr << "Key value improper length. Two bytes, please." << endl;
        exit(0);
@@ -75,4 +82,56 @@ int hexToInt(char* hexVal){
     if (lByte > 64) lByte -= 55;
     if (rByte > 64) rByte -= 55;
     return 16*lByte + rByte; 
+}
+
+byte charToByte(char charVal){
+        return (int)charVal;
+}
+
+//This function divides a byte into the most sig(left) and least
+//sig(right) four-bit value.
+void getNibblesFromByte(byte in, nibble& lNibble, nibble& rNibble){
+     cout << in << endl;
+     lNibble = in/16;
+     rNibble = in%16;
+     return;     
+}
+
+//This is a substitution function which maps the input plaintext onto
+//an output ciphertext in a fashion dependent on a key nibble
+void sBox(byte& text, nibble key){
+     static nibble sBox[16][16] = {
+            {13, 6, 14, 7, 5, 4, 1, 3, 11, 12, 15, 8, 9, 0, 2, 10},
+            {6, 11, 7, 13, 10, 9, 0, 2, 12, 5, 4, 1, 8, 3, 15, 14},
+            {8, 10, 13, 7, 6, 12, 4, 3, 0, 14, 1, 15, 5, 2, 9, 11},
+            {6, 5, 3, 2, 11, 1, 0, 15, 12, 10, 9, 4, 8, 14, 13, 7},
+            {10, 13, 5, 7, 9, 2, 14, 3, 11, 4, 0, 8, 15, 1, 6, 12},
+            {13, 4, 9, 14, 1, 10, 15, 8, 7, 2, 5, 12, 11, 0, 3, 6},
+            {3, 2, 1, 0, 14, 12, 11, 9, 15, 7, 13, 6, 5, 10, 4, 8},
+            {6, 5, 12, 10, 7, 1, 0, 4, 15, 11, 3, 9, 2, 14, 13, 8},
+            {13, 4, 10, 5, 1, 3, 9, 8, 7, 6, 2, 14, 15, 0, 11, 12},
+            {6, 9, 5, 14, 15, 2, 0, 13, 10, 1, 8, 12, 11, 7, 3, 4},
+            {12, 13, 11, 8, 5, 4, 10, 9, 3, 7, 6, 2, 0, 1, 15, 14},
+            {6, 5, 15, 13, 9, 1, 0, 10, 11, 4, 7, 8, 14, 3, 12, 2},
+            {7, 13, 8, 11, 5, 4, 15, 0, 2, 10, 9, 3, 14, 1, 12, 6},
+            {13, 11, 6, 12, 15, 10, 2, 8, 7, 14, 5, 1, 3, 0, 9, 4},
+            {11, 6, 8, 14, 9, 10, 1, 12, 2, 4, 5, 0, 7, 15, 3, 13},
+            {15, 4, 7, 10, 1, 6, 5, 2, 12, 13, 3, 14, 8, 9, 11, 0}
+            };
+     text = sBox[key][text];
+     return;     
+}
+
+void XORwithKey(nibble& in, nibble key){
+     in = in^key;
+     return;     
+}
+
+//shift the key two bits left, discard the two most sig bits,
+//and pad with two bits of plaintext on the right side
+void shiftIntoKey(byte& key, byte plainText){
+     key = (key*4)%256;
+     plainText = plainText%4;
+     key += plainText;
+     return;
 }
