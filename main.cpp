@@ -17,11 +17,13 @@ typedef byte nibble;
 
 byte hexToByte(char* hexVal); //x
 byte charToByte(char charVal); //x
+byte nibblesToByte(nibble lNibble, nibble rNibble); //x
+char nibblesToChar(nibble lNibble, nibble rNibble); //x
 
-void encipher(char plainText, byte key);
-void decipher(char cipherText, byte key);
+void encipher(char& plainText, byte& key); //x
+void decipher(char& cipherText, byte& key); //x
 
-void sBox(byte& text, int key); //x
+void sBox(nibble& text, int key); //x
 
 void XORwithKey(nibble& in, nibble key); //x
 
@@ -33,6 +35,8 @@ void shiftIntoKey(byte& key, byte plainText); //x
 int main(int argc, char** argv){
     nibble rKeyNibble=0, lKeyNibble=0;
     byte key;
+    fstream inFile, outFile;
+    char processing;
     if (argc < 2){
        cerr << "No file specified." << endl;
        return 0;
@@ -50,13 +54,29 @@ int main(int argc, char** argv){
     getNibblesFromByte(key, lKeyNibble, rKeyNibble);
     if (strcmp(fileName + strlen(fileName) - 4, ".gnc") == 0){
        //gen_crypt produces a plain text file from the .gnc file
-       ;
+       inFile.open(fileName, fstream::in);
+       outFile.open("plain.txt", fstream::out);
+       cout << "Decipher!" << endl;
+       while(inFile){
+                      inFile >> processing;
+                      cout << processing << " ";
+                      decipher(processing, key);
+                      cout << processing << endl;
+                      outFile << processing;
+       }
     }
     else{
-        cout << key << endl;
-        cout << lKeyNibble << " " << rKeyNibble << endl;    
+         inFile.open(fileName, fstream::in);
+       outFile.open("cipher.gnc", fstream::out);
+       cout << "Encipher!" << endl;
+       while(inFile){
+                      inFile >> processing;
+                      cout << processing << " ";
+                      encipher(processing, key);
+                      cout << processing << endl;
+                      outFile << processing;
+       }    
     }
-        //gen_crypt produces a .gnc file from the plain text
 	return 0;
 }
 
@@ -91,7 +111,7 @@ byte charToByte(char charVal){
 //This function divides a byte into the most sig(left) and least
 //sig(right) four-bit value.
 void getNibblesFromByte(byte in, nibble& lNibble, nibble& rNibble){
-     cout << in << endl;
+     //cout << in << endl;
      lNibble = in/16;
      rNibble = in%16;
      return;     
@@ -99,7 +119,7 @@ void getNibblesFromByte(byte in, nibble& lNibble, nibble& rNibble){
 
 //This is a substitution function which maps the input plaintext onto
 //an output ciphertext in a fashion dependent on a key nibble
-void sBox(byte& text, nibble key){
+void sBox(nibble& text, nibble key){
      static nibble sBox[16][16] = {
             {13, 6, 14, 7, 5, 4, 1, 3, 11, 12, 15, 8, 9, 0, 2, 10},
             {6, 11, 7, 13, 10, 9, 0, 2, 12, 5, 4, 1, 8, 3, 15, 14},
@@ -133,5 +153,46 @@ void shiftIntoKey(byte& key, byte plainText){
      key = (key*4)%256;
      plainText = plainText%4;
      key += plainText;
+     return;
+}
+
+char nibblesToChar(nibble lNibble, nibble rNibble){
+     return static_cast<char>(16*lNibble + rNibble);
+}
+
+byte nibblesToByte(nibble lNibble, nibble rNibble){
+     return 16*lNibble + rNibble;
+}
+
+
+
+void encipher(char& plainText, byte& key){
+     nibble lKey, rKey;
+     nibble lText, rText;
+     byte plain = charToByte(plainText);
+     getNibblesFromByte(key, lKey, rKey);
+     getNibblesFromByte(plain, lText, rText);
+     sBox(lText, lKey);
+     sBox(rText, rKey);
+     XORwithKey(lText, rKey);
+     XORwithKey(rText, lKey);
+     //shiftIntoKey(key, plain);
+     plainText = nibblesToChar(lText, rText);
+     return;     
+}
+
+void decipher(char& cipherText, byte& key){
+     nibble lKey, rKey;
+     nibble lText, rText;
+     byte plain;
+     byte cipher = charToByte(cipherText);
+     getNibblesFromByte(key, lKey, rKey);
+     getNibblesFromByte(cipher, lText, rText);
+     XORwithKey(lText, rKey);
+     XORwithKey(rText, lKey);
+     sBox(lText, lKey);
+     sBox(rText, rKey);
+     plain = nibblesToByte(lText, rText);
+     //shiftIntoKey(key, plain);
      return;
 }
