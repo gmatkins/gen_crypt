@@ -57,8 +57,9 @@ int main(int argc, char** argv){
        inFile.open(fileName, fstream::in);
        outFile.open("plain.txt", fstream::out);
        cout << "Decipher!" << endl;
-       while(inFile){
-                      inFile >> processing;
+       while(inFile.good()){
+                      inFile.get(processing);
+			if(processing == '.') return 0;
                       cout << processing << " ";
                       decipher(processing, key);
                       cout << processing << endl;
@@ -69,14 +70,17 @@ int main(int argc, char** argv){
          inFile.open(fileName, fstream::in);
        outFile.open("cipher.gnc", fstream::out);
        cout << "Encipher!" << endl;
-       while(inFile){
-                      inFile >> processing;
+       while(inFile.good()){
+                      inFile.get(processing);
+			if(processing == '.') return 0;
                       cout << processing << " ";
                       encipher(processing, key);
                       cout << processing << endl;
                       outFile << processing;
        }    
     }
+	inFile.close();
+	outFile.close();
 	return 0;
 }
 
@@ -91,8 +95,8 @@ byte hexToByte(char* hexVal){
     int lByte, rByte;
     lByte = static_cast<int>(hexVal[0]);
     rByte = static_cast<int>(hexVal[1]);
-    toupper(lByte);
-    toupper(rByte);
+    lByte = toupper(lByte);
+    rByte = toupper(rByte);
     if (lByte > (int)'F' || rByte > (int)'F'){
        cerr << "Hexadecimal, please" << endl;
        exit(0);
@@ -170,8 +174,12 @@ void encipher(char& plainText, byte& key){
      nibble lKey, rKey;
      nibble lText, rText;
      byte plain = charToByte(plainText);
+	//cout << "Plain Text = " << plainText << endl;
+	//cout << "Byte = " << plain << endl;
      getNibblesFromByte(key, lKey, rKey);
      getNibblesFromByte(plain, lText, rText);
+	//cout << "Left text nibble = " << lText << endl;
+	//cout << "Right text nibble = " << rText << endl;
      sBox(lText, lKey);
      sBox(rText, rKey);
      XORwithKey(lText, rKey);
