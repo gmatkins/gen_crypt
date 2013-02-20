@@ -59,10 +59,10 @@ int main(int argc, char** argv){
        cout << "Decipher!" << endl;
        while(inFile.good()){
                       inFile.get(processing);
-			if(processing == '.') return 0;
-                      cout << processing << " ";
+			//if(processing == '.') return 0;
+                      //cout << processing << " ";
                       decipher(processing, key);
-                      cout << processing << endl;
+                      //cout << processing << endl;
                       outFile << processing;
        }
     }
@@ -72,10 +72,10 @@ int main(int argc, char** argv){
        cout << "Encipher!" << endl;
        while(inFile.good()){
                       inFile.get(processing);
-			if(processing == '.') return 0;
-                      cout << processing << " ";
+			//if(processing == '.') return 0;
+                      //cout << processing << " ";
                       encipher(processing, key);
-                      cout << processing << endl;
+                      //cout << processing << endl;
                       outFile << processing;
        }    
     }
@@ -109,7 +109,9 @@ byte hexToByte(char* hexVal){
 }
 
 byte charToByte(char charVal){
-        return (int)charVal;
+        int retVal = (int)charVal;
+	if (retVal > 255) return 0;
+	return retVal;
 }
 
 //This function divides a byte into the most sig(left) and least
@@ -124,6 +126,7 @@ void getNibblesFromByte(byte in, nibble& lNibble, nibble& rNibble){
 //This is a substitution function which maps the input plaintext onto
 //an output ciphertext in a fashion dependent on a key nibble
 void sBox(nibble& text, nibble key){
+	if(text > 15) return;
      static nibble sBox[16][16] = {
             {13, 6, 14, 7, 5, 4, 1, 3, 11, 12, 15, 8, 9, 0, 2, 10},
             {6, 11, 7, 13, 10, 9, 0, 2, 12, 5, 4, 1, 8, 3, 15, 14},
@@ -174,12 +177,12 @@ void encipher(char& plainText, byte& key){
      nibble lKey, rKey;
      nibble lText, rText;
      byte plain = charToByte(plainText);
-	//cout << "Plain Text = " << plainText << endl;
-	//cout << "Byte = " << plain << endl;
+	cout << "Plain Text = " << plainText << endl;
+	cout << "Byte = " << plain << endl;
      getNibblesFromByte(key, lKey, rKey);
      getNibblesFromByte(plain, lText, rText);
-	//cout << "Left text nibble = " << lText << endl;
-	//cout << "Right text nibble = " << rText << endl;
+	cout << "Left text nibble = " << lText << endl;
+	cout << "Right text nibble = " << rText << endl;
      sBox(lText, lKey);
      sBox(rText, rKey);
      XORwithKey(lText, rKey);
